@@ -1,6 +1,8 @@
-from django.shortcuts import get_object_or_404, render, HttpResponse,HttpResponseRedirect, reverse
+from django.shortcuts import get_object_or_404, render, HttpResponse,HttpResponseRedirect
 from django.http import Http404
 from django.template import loader
+from django.urls import reverse
+from django.views import generic
 from .models import Question, Choice
 
 
@@ -18,16 +20,17 @@ from .models import Question, Choice
 #         raise Http404("Question does not exist")
 #     return render(request, "polls/detail.html", {"question": question})
 
-def detail(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "templates/polls/detail.html", {"question": question})  
+
+class DetailView(generic.DetailView):
+    model = Question
+    template_name = "templates/polls/detail.html" 
 # here we need to give a path manually becouse
 # here i am give diffrent name of the project but in case of django documnets project name and inside template directory same name as a polls
 
 
-def results(request, question_id):
-    question = get_object_or_404(Question, pk=question_id)
-    return render(request, "templates/polls/results.html", {"question": question})
+class ResultsView(generic.DetailView):
+    model = Question
+    template_name = "templates/polls/results.html"
 
 
 # this is the dumy of the vote method
@@ -59,7 +62,10 @@ def vote(request, question_id):
         return HttpResponseRedirect(reverse("polls:results", args=(question.id,)))
 
 # Here is new index page
-def index(request):
-    latest_question_list = Question.objects.order_by("-pub_date")[:5]
-    context = {"latest_question_list": latest_question_list}
-    return render(request, "templates/polls/index.html", context) 
+class IndexView(generic.ListView):
+    template_name = "templates/polls/index.html"
+    context_object_name = "latest_question_list"
+
+    def get_queryset(self):
+        """Return the last five published questions."""
+        return Question.objects.order_by("-pub_date")[:5] 
